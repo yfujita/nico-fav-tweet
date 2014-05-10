@@ -52,7 +52,7 @@ func main() {
 			}
 
 			if !exists {
-				message := "@meumeu69 " + ri.Title + " (" + ri.Point + " points) " + ri.Link
+				message := ri.Title + " (" + ri.Point + " points) " + ri.Link
 				fmt.Println(message)
 				tw.Message(message)
 				if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
