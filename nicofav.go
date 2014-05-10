@@ -3,6 +3,8 @@ package main
 import (
 	"container/list"
 	"fmt"
+	"github.com/yfujita/nico-fav-tweet/nicorank"
+	"github.com/yfujita/nico-fav-tweet/tweet"
 	"time"
 )
 
@@ -19,9 +21,9 @@ const (
 func main() {
 	latestVideoLists := list.New()
 
-	ch := make(chan []*RankInfo, 10)
-	go func(ch chan []*RankInfo) {
-		nr := NewNicoRank()
+	ch := make(chan []*nicorank.RankInfo, 10)
+	go func(ch chan []*nicorank.RankInfo) {
+		nr := nicorank.NewNicoRank()
 		for {
 			fmt.Println("start nico task")
 			ris := nr.Get()
@@ -30,7 +32,7 @@ func main() {
 		}
 	}(ch)
 
-	tw := NewTweet()
+	tw := tweet.NewTweet()
 	tw.SetUp(CONSUMER_KEY, CONSUMER_SECRET, ATOKEN, ATOKEN_SECRET)
 
 	for {
@@ -50,7 +52,7 @@ func main() {
 			}
 
 			if !exists {
-				message := ri.Title + " (" + ri.Point + " points) " + ri.Link
+				message := "@meumeu69 " + ri.Title + " (" + ri.Point + " points) " + ri.Link
 				fmt.Println(message)
 				tw.Message(message)
 				if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
