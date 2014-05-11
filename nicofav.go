@@ -29,7 +29,6 @@ func main() {
 	go func(ch chan []*nicorank.RankInfo) {
 		nr := nicorank.NewNicoRank()
 		for {
-			logging("start nico task")
 			ris := nr.Get()
 			ch <- ris
 			time.Sleep(INTERVAL * time.Minute)
@@ -41,11 +40,12 @@ func main() {
 
 	for {
 		ris := <-ch
-		logging("start main task")
+		logger := NewLogger()
+		logger.Logging("start main task")
 
 		count := 0
 		for i, ri := range ris {
-			logging(ri.Link)
+			logger.Logging(ri.Link)
 			var exists bool = false
 			for e := latestVideoLists.Front(); e != nil; e = e.Next() {
 				if ri.Link == e.Value {
@@ -56,14 +56,14 @@ func main() {
 
 			if !exists {
 				message := ri.Title + " (" + ri.Point + " points) " + ri.Link
-				logging(message)
+				logger.Logging(message)
 				tw.Message(message)
 				if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
 					e := latestVideoLists.Front()
 					latestVideoLists.Remove(e)
 				}
 				latestVideoLists.PushBack(ri.Link)
-				logging("dup lists size=" + strconv.FormatInt(int64(latestVideoLists.Len()), 10))
+				logger.Logging("dup lists size=" + strconv.FormatInt(int64(latestVideoLists.Len()), 10))
 
 				count++
 				if i > TWEET_LIMIT {
@@ -75,30 +75,46 @@ func main() {
 				time.Sleep(1 * time.Second)
 			}
 		}
+		logger.Close()
 	}
 }
 
-func logging(str string) {
+type Logger struct {
+	file *os.File
+}
+
+func NewLogger() *Logger {
 	if len(LOG_PATH) <= 0 {
-		return
+		return nil
 	}
 
 	if _, err := os.Stat(LOG_PATH); err != nil {
 		if os.IsNotExist(err) {
 			fo, err := os.Create(LOG_PATH)
 			if err != nil {
-				return
+				return nil
 			}
 			fo.Close()
 		}
 	}
 
+	lg := new(Logger)
 	f, err := os.OpenFile(LOG_PATH, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		return
+		return nil
 	}
-	defer f.Close()
-	log.SetOutput(f)
+
+	lg.file = f
+	return lg
+}
+
+func (lg *Logger) Close() {
+	lg.file.Close()
+	lg.file = nil
+}
+
+func (lg *Logger) Logging(str string) {
+	log.SetOutput(lg.file)
 
 	message := "[" + time.Now().Format(time.RFC3339) + "] " + str
 	fmt.Println(message)
