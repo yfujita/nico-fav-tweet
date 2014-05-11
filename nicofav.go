@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/yfujita/nico-fav-tweet/nicorank"
 	"github.com/yfujita/nico-fav-tweet/tweet"
+	"log"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -12,6 +15,7 @@ const (
 	INTERVAL            = 30
 	MAX_DUPLICATE_COUNT = 100
 	TWEET_LIMIT         = 5
+	LOG_PATH            = "/tmp/nicofav.log"
 	CONSUMER_KEY        = "set consumer key of twitter app"
 	CONSUMER_SECRET     = "set consumer secret"
 	ATOKEN              = "set access token of twitter bot account"
@@ -25,7 +29,7 @@ func main() {
 	go func(ch chan []*nicorank.RankInfo) {
 		nr := nicorank.NewNicoRank()
 		for {
-			fmt.Println("start nico task")
+			logging("start nico task")
 			ris := nr.Get()
 			ch <- ris
 			time.Sleep(INTERVAL * time.Minute)
@@ -37,12 +41,11 @@ func main() {
 
 	for {
 		ris := <-ch
-		fmt.Println(time.Now())
-		fmt.Println("start main task")
+		logging("start main task")
 
 		count := 0
 		for i, ri := range ris {
-			fmt.Println(ri.Link)
+			logging(ri.Link)
 			var exists bool = false
 			for e := latestVideoLists.Front(); e != nil; e = e.Next() {
 				if ri.Link == e.Value {
@@ -53,14 +56,14 @@ func main() {
 
 			if !exists {
 				message := ri.Title + " (" + ri.Point + " points) " + ri.Link
-				fmt.Println(message)
+				logging(message)
 				tw.Message(message)
 				if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
 					e := latestVideoLists.Front()
 					latestVideoLists.Remove(e)
 				}
 				latestVideoLists.PushBack(ri.Link)
-				fmt.Println("dup lists size=%d", latestVideoLists.Len())
+				logging("dup lists size=" + strconv.FormatInt(int64(latestVideoLists.Len()), 10))
 
 				count++
 				if i > TWEET_LIMIT {
@@ -73,4 +76,31 @@ func main() {
 			}
 		}
 	}
+}
+
+func logging(str string) {
+	if len(LOG_PATH) <= 0 {
+		return
+	}
+
+	if _, err := os.Stat(LOG_PATH); err != nil {
+		if os.IsNotExist(err) {
+			fo, err := os.Create(LOG_PATH)
+			if err != nil {
+				return
+			}
+			fo.Close()
+		}
+	}
+
+	f, err := os.OpenFile(LOG_PATH, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	log.SetOutput(f)
+
+	message := "[" + time.Now().Format(time.RFC3339) + "] " + str
+	fmt.Println(message)
+	log.Println(message)
 }
