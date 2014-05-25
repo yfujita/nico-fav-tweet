@@ -29,7 +29,10 @@ func main() {
 	go func(ch chan []*nicorank.RankInfo) {
 		nr := nicorank.NewNicoRank()
 		for {
-			ris := nr.Get()
+			ris, err := nr.Get()
+			if err != nil {
+
+			}
 			ch <- ris
 			time.Sleep(INTERVAL * time.Minute)
 		}
@@ -56,8 +59,12 @@ func main() {
 
 			if !exists {
 				message := ri.Title + " (" + ri.Point + " points) " + ri.Link
-				logger.Logging(message)
-				tw.Message(message)
+				logger.Logging("@meumeu69 " + message)
+				err := tw.Message(message)
+				if err != nil {
+					logger.Logging("Failed to tweet message: " + message)
+				}
+
 				if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
 					e := latestVideoLists.Front()
 					latestVideoLists.Remove(e)

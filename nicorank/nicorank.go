@@ -2,7 +2,6 @@ package nicorank
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -44,14 +43,14 @@ func NewNicoRank() *NicoRank {
 	return nr
 }
 
-func (nr *NicoRank) Get() []*RankInfo {
+func (nr *NicoRank) Get() ([]*RankInfo, error) {
 	resp, err := http.Get(nr.Url)
 	if err != nil {
-		fmt.Printf("error\n")
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	return parse(body)
+	return parse(body), nil
 }
 
 func (nr *NicoRank) init() {

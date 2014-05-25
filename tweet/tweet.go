@@ -33,7 +33,7 @@ func (tw *Tweet) SetUp(consumerKey, consumerSecret, aToken, aTokenSecret string)
 		})
 }
 
-func (tw *Tweet) Message(message string) {
+func (tw *Tweet) Message(message string) error {
 	response, err := tw.consumer.Post(
 		"https://api.twitter.com/1.1/statuses/update.json",
 		map[string]string{
@@ -42,10 +42,11 @@ func (tw *Tweet) Message(message string) {
 		tw.accessToken)
 
 	if err != nil {
-		//ignore
+		return err
 	}
 
 	if response != nil {
 		//ignore
 	}
+	return nil
 }
