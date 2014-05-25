@@ -35,9 +35,9 @@ start() {
   fi
   echo -n "Starting $prog: "
   if [ -f /etc/rc.d/init.d/functions ]; then
-      daemon --user $user $nico -conf $nicohome/config 2>> /tmp/nico-error.log &
+      daemon --user $user $nico 2>> /tmp/nico-error.log &
     else
-      su - $user -c "${nico} -conf ${nicohome}/config 2>> /tmp/nico-error.log &"
+      su - $user -c "${nico} 2>> /tmp/nico-error.log &"
   fi
   echo $! > $pidfile
   pidof $nico >/dev/null 2>&1

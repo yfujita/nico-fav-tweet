@@ -2,7 +2,6 @@ package main
 
 import (
 	"container/list"
-	"fmt"
 	"github.com/yfujita/nico-fav-tweet/nicorank"
 	"github.com/yfujita/nico-fav-tweet/tweet"
 	"log"
@@ -59,7 +58,7 @@ func main() {
 
 			if !exists {
 				message := ri.Title + " (" + ri.Point + " points) " + ri.Link
-				logger.Logging("@meumeu69 " + message)
+				logger.Logging(message)
 				err := tw.Message(message)
 				if err != nil {
 					logger.Logging("Failed to tweet message: " + message)
@@ -124,6 +123,5 @@ func (lg *Logger) Logging(str string) {
 	log.SetOutput(lg.file)
 
 	message := "[" + time.Now().Format(time.RFC3339) + "] " + str
-	fmt.Println(message)
 	log.Println(message)
 }
