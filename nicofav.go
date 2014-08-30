@@ -37,11 +37,11 @@ func main() {
 		}
 	}(ch)
 
-	tw := tweet.NewTweet()
-	tw.SetUp(CONSUMER_KEY, CONSUMER_SECRET, ATOKEN, ATOKEN_SECRET)
-
 	for {
 		ris := <-ch
+		tw := tweet.NewTweet()
+		tw.SetUp(CONSUMER_KEY, CONSUMER_SECRET, ATOKEN, ATOKEN_SECRET)
+
 		logger := NewLogger()
 		logger.Logging("start main task")
 
