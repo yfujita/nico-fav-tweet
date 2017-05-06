@@ -22,10 +22,18 @@ const (
 )
 
 func main() {
-	ck := flag.String("ck", "", "set consumer key of twitter app")
-	cs := flag.String("cs", "", "set consumer secret")
-	atoken := flag.String("at", "", "set access token of twitter bot account")
-	atoken_secret := flag.String("as", "", "access token secret")
+	var (
+		ck string
+		cs string
+		atoken string
+		atoken_secret string
+	)
+
+	flag.StringVar(&ck, "ck", "", "set consumer key of twitter app")
+	flag.StringVar(&cs, "cs", "", "set consumer secret")
+	flag.StringVar(&atoken, "at", "", "set access token of twitter bot account")
+	flag.StringVar(&atoken_secret, "as", "", "access token secret")
+	flag.Parse()
 
 	latestVideoLists := getLatestVideos(LATEST_MOVIES_FILE)
 	nr := nicorank.NewNicoRank()
@@ -35,7 +43,7 @@ func main() {
 	}
 
 	tw := tweet.NewTweet()
-	tw.SetUp(*ck, *cs, *atoken, *atoken_secret)
+	tw.SetUp(ck, cs, atoken, atoken_secret)
 
 	logger := NewLogger()
 	logger.Logging("start main task")
@@ -57,6 +65,7 @@ func main() {
 			err := tw.Message(message)
 			if err != nil {
 				logger.Logging("Failed to tweet message: " + message)
+				panic(err)
 			}
 
 			if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
