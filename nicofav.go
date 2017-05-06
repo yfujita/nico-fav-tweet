@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"bufio"
 	"io"
+	"flag"
 )
 
 const (
@@ -18,13 +19,14 @@ const (
 	TWEET_LIMIT         = 5
 	LATEST_MOVIES_FILE = "./latest.txt"
 	LOG_PATH            = "/tmp/nicofav.log"
-	CONSUMER_KEY        = "set consumer key of twitter app"
-	CONSUMER_SECRET     = "set consumer secret"
-	ATOKEN              = "set access token of twitter bot account"
-	ATOKEN_SECRET       = "set access token secret"
 )
 
 func main() {
+	ck := flag.String("ck", "", "set consumer key of twitter app")
+	cs := flag.String("cs", "", "set consumer secret")
+	atoken := flag.String("at", "", "set access token of twitter bot account")
+	atoken_secret := flag.String("as", "", "access token secret")
+
 	latestVideoLists := getLatestVideos(LATEST_MOVIES_FILE)
 	nr := nicorank.NewNicoRank()
 	ris, err := nr.Get()
@@ -33,7 +35,7 @@ func main() {
 	}
 
 	tw := tweet.NewTweet()
-	tw.SetUp(CONSUMER_KEY, CONSUMER_SECRET, ATOKEN, ATOKEN_SECRET)
+	tw.SetUp(ck, cs, atoken, atoken_secret)
 
 	logger := NewLogger()
 	logger.Logging("start main task")
