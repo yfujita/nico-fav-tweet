@@ -35,7 +35,7 @@ func main() {
 	}
 
 	tw := tweet.NewTweet()
-	tw.SetUp(ck, cs, atoken, atoken_secret)
+	tw.SetUp(*ck, *cs, *atoken, *atoken_secret)
 
 	logger := NewLogger()
 	logger.Logging("start main task")
