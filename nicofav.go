@@ -65,7 +65,6 @@ func main() {
 			err := tw.Message(message)
 			if err != nil {
 				logger.Logging("Failed to tweet message: " + message)
-				panic(err)
 			}
 
 			if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
