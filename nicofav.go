@@ -62,12 +62,10 @@ func main() {
 		if !exists {
 			message := ri.Title + " (" + ri.Point + " points) " + ri.Link
 			logger.Logging(message)
-			/*
 			err := tw.Message(message)
 			if err != nil {
 				logger.Logging("Failed to tweet message: " + message)
 			}
-			*/
 
 			if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
 				e := latestVideoLists.Front()
