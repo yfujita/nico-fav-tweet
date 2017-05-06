@@ -8,12 +8,15 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"fmt"
+	"bufio"
+	"io"
 )
 
 const (
-	INTERVAL            = 30
 	MAX_DUPLICATE_COUNT = 100
 	TWEET_LIMIT         = 5
+	LATEST_MOVIES_FILE = "./latest.txt"
 	LOG_PATH            = "/tmp/nicofav.log"
 	CONSUMER_KEY        = "set consumer key of twitter app"
 	CONSUMER_SECRET     = "set consumer secret"
@@ -22,67 +25,102 @@ const (
 )
 
 func main() {
+	latestVideoLists := getLatestVideos(LATEST_MOVIES_FILE)
+	nr := nicorank.NewNicoRank()
+	ris, err := nr.Get()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	tw := tweet.NewTweet()
+	tw.SetUp(CONSUMER_KEY, CONSUMER_SECRET, ATOKEN, ATOKEN_SECRET)
+
+	logger := NewLogger()
+	logger.Logging("start main task")
+
+	count := 0
+	for i, ri := range ris {
+		logger.Logging(ri.Link)
+		var exists bool = false
+		for e := latestVideoLists.Front(); e != nil; e = e.Next() {
+			if ri.Link == e.Value {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			message := ri.Title + " (" + ri.Point + " points) " + ri.Link
+			logger.Logging(message)
+			err := tw.Message(message)
+			if err != nil {
+				logger.Logging("Failed to tweet message: " + message)
+			}
+
+			if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
+				e := latestVideoLists.Front()
+				latestVideoLists.Remove(e)
+			}
+			latestVideoLists.PushBack(ri.Link)
+			logger.Logging("dup lists size=" + strconv.FormatInt(int64(latestVideoLists.Len()), 10))
+
+			count++
+			if i > TWEET_LIMIT {
+				count++
+			}
+			if count >= TWEET_LIMIT {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+	updateLatestVideos(LATEST_MOVIES_FILE, latestVideoLists)
+	logger.Close()
+}
+
+func getLatestVideos(path string) *list.List {
 	latestVideoLists := list.New()
 
-	ch := make(chan []*nicorank.RankInfo, 10)
-	go func(ch chan []*nicorank.RankInfo) {
-		nr := nicorank.NewNicoRank()
-		for {
-			ris, err := nr.Get()
-			if err != nil {
-
-			}
-			ch <- ris
-			time.Sleep(INTERVAL * time.Minute)
-		}
-	}(ch)
-
-	for {
-		ris := <-ch
-		tw := tweet.NewTweet()
-		tw.SetUp(CONSUMER_KEY, CONSUMER_SECRET, ATOKEN, ATOKEN_SECRET)
-
-		logger := NewLogger()
-		logger.Logging("start main task")
-
-		count := 0
-		for i, ri := range ris {
-			logger.Logging(ri.Link)
-			var exists bool = false
-			for e := latestVideoLists.Front(); e != nil; e = e.Next() {
-				if ri.Link == e.Value {
-					exists = true
-					break
-				}
-			}
-
-			if !exists {
-				message := ri.Title + " (" + ri.Point + " points) " + ri.Link
-				logger.Logging(message)
-				err := tw.Message(message)
-				if err != nil {
-					logger.Logging("Failed to tweet message: " + message)
-				}
-
-				if MAX_DUPLICATE_COUNT < latestVideoLists.Len() {
-					e := latestVideoLists.Front()
-					latestVideoLists.Remove(e)
-				}
-				latestVideoLists.PushBack(ri.Link)
-				logger.Logging("dup lists size=" + strconv.FormatInt(int64(latestVideoLists.Len()), 10))
-
-				count++
-				if i > TWEET_LIMIT {
-					count++
-				}
-				if count >= TWEET_LIMIT {
-					break
-				}
-				time.Sleep(1 * time.Second)
-			}
-		}
-		logger.Close()
+	fp, err := os.Open(path)
+	if err != nil && os.IsExist(err) {
+		panic(err)
 	}
+
+	if err == nil {
+		defer fp.Close()
+		reader := bufio.NewReaderSize(fp, 4096)
+		for {
+			line, _, err := reader.ReadLine()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				panic(err)
+			}
+			latestVideoLists.PushBack(string(line))
+		}
+	}
+
+	return latestVideoLists
+}
+
+func updateLatestVideos(path string, latestVideoLists *list.List) {
+	if _, err := os.Stat(path); err == nil {
+		os.Remove(path)
+	}
+
+	fp, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	defer fp.Close()
+
+	writer:= bufio.NewWriter(fp)
+	for e := latestVideoLists.Front(); e != nil; e = e.Next() {
+		fmt.Println(e.Value)
+		writer.WriteString(e.Value.(string) + "\n")
+	}
+	writer.Flush()
 }
 
 type Logger struct {
@@ -105,7 +143,7 @@ func NewLogger() *Logger {
 	}
 
 	lg := new(Logger)
-	f, err := os.OpenFile(LOG_PATH, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(LOG_PATH, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
 	if err != nil {
 		return nil
 	}
@@ -124,4 +162,5 @@ func (lg *Logger) Logging(str string) {
 
 	message := "[" + time.Now().Format(time.RFC3339) + "] " + str
 	log.Println(message)
+	fmt.Println(message)
 }
