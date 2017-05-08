@@ -16,7 +16,7 @@ import (
 
 const (
 	MAX_DUPLICATE_COUNT = 100
-	TWEET_LIMIT         = 5
+	TWEET_LIMIT         = 1
 	LATEST_MOVIES_FILE = "./latest.txt"
 	LOG_PATH            = "/tmp/nicofav.log"
 )
