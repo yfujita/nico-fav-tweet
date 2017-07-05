@@ -12,6 +12,7 @@ import (
 	"bufio"
 	"io"
 	"flag"
+	"unicode/utf8"
 )
 
 const (
@@ -61,10 +62,10 @@ func main() {
 
 		if !exists {
 			message := ri.Title + " (" + ri.Point + " points) " + ri.Link
-			if len(message) < 130 {
+			if utf8.RuneCountInString(message) < 130 {
 				message = message + " #ニコニコ動画"
 			}
-			if len(message) < 130 {
+			if utf8.RuneCountInString(message) < 130 {
 				message = message + " #" + ri.Id
 			}
 
