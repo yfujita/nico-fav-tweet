@@ -19,6 +19,7 @@ type RankInfo struct {
 	Title string
 	Link  string
 	Point string
+	Id    string
 }
 
 type Rss struct {
@@ -70,8 +71,8 @@ func parse(r []byte) []*RankInfo {
 
 		rankIndex := strings.Index(item.Title, "位：")
 		ri.Title = item.Title[rankIndex+len("位："):]
-
 		ri.Link = item.Link
+		ri.Id = item.Link[strings.LastIndex(item.Link, "/") + 1:]
 
 		pointIndex := strings.Index(item.Description, pointTag)
 		substr := item.Description[pointIndex+len(pointTag):]

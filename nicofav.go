@@ -61,6 +61,13 @@ func main() {
 
 		if !exists {
 			message := ri.Title + " (" + ri.Point + " points) " + ri.Link
+			if len(message) < 130 {
+				message = message + " #ニコニコ動画"
+			}
+			if len(message) < 130 {
+				message = message + " #" + ri.Id
+			}
+
 			logger.Logging(message)
 			err := tw.Message(message)
 			if err != nil {
