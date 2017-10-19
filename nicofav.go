@@ -52,7 +52,7 @@ func main() {
 	count := 0
 	for i, ri := range ris {
 		logger.Logging(ri.Link)
-		var exists bool = false
+		var exists = false
 		for e := latestVideoLists.Front(); e != nil; e = e.Next() {
 			if ri.Link == e.Value {
 				exists = true
