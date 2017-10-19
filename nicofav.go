@@ -94,6 +94,10 @@ func main() {
 	}
 
 	updateLatestVideos(LATEST_MOVIES_FILE, latestVideoLists)
+	err = followBack(tw)
+	if err != nil {
+		panic(err)
+	}
 	logger.Close()
 }
 
@@ -139,6 +143,52 @@ func updateLatestVideos(path string, latestVideoLists *list.List) {
 		writer.WriteString(e.Value.(string) + "\n")
 	}
 	writer.Flush()
+}
+
+func followBack(tw *tweet.Tweet) error {
+	friends, err := tw.Friends()
+	if err != nil {
+		return err
+	}
+	followers, err := tw.Followers()
+	if err != nil {
+		return err
+	}
+
+	for _, follower := range followers.Ids {
+		find := false
+		for _, friend := range friends.Ids {
+			if follower == friend {
+				find = true
+				break
+			}
+		}
+		if !find {
+			log.Println("follow:" + strconv.FormatInt(follower, 10))
+			err = tw.Follow(follower)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+
+	for _, friend := range friends.Ids {
+		find := false
+		for _, follower := range followers.Ids {
+			if follower == friend {
+				find = true
+				break
+			}
+		}
+		if !find {
+			log.Println("Unfollow:" + strconv.FormatInt(friend, 64))
+			err = tw.Unfollow(friend)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+	return nil
 }
 
 type Logger struct {
